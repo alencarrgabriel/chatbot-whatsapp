@@ -51,18 +51,38 @@ Digite o número da opção desejada:
     }
 
     // Variável para guardar a mensagem final do grupo de ofertas
-    const mensagemGrupoOfertas = `\n\nGostaria de ficar por dentro de todas as nossas ofertas? Participe do nosso grupo especial no WhatsApp! 🎉\nClique aqui: https://chat.whatsapp.com/SEU_LINK_AQUI`; // ATENÇÃO: Substitua SEU_LINK_AQUI pelo link real do seu grupo
+    const mensagemGrupoOfertas = `\n\nGostaria de ficar por dentro de todas as nossas ofertas? Participe do nosso grupo especial no WhatsApp! 🎉\nClique aqui: https://chat.whatsapp.com/promocoeseta`; // ATENÇÃO: Substitua SEU_LINK_AQUI pelo link real do seu grupo
 
     if (msg.body !== null && msg.body.trim() === '1') {
         await delay(1500);
         await chat.sendStateTyping();
         await delay(2000);
-        await client.sendMessage(msg.from, `Legal que você quer fazer um pedido com a gente! 🛵💨
 
-Para fazer seu pedido de entrega, por favor, nos chame diretamente no WhatsApp clicando neste link: wa.me/SEUNUMERODEPEDIDOS ou ligue para (61) 3877-3332.
+        // Envia as instruções para o cliente
+        await client.sendMessage(msg.from, `Ótimo! Vamos fazer seu pedido para entrega. 🚚🛒
 
-Tenha sua lista de compras em mãos para facilitar! 😉${mensagemGrupoOfertas}`);
+Por favor, envie as seguintes informações no modelo abaixo:
 
+📦 *Itens desejados* (produto + quantidade):
+- Ex: Arroz Flora 5kg - 2 unidades
+- Ex: Toddyinho 200ml - 5 unidades
+
+💳 *Forma de pagamento*:
+- Cartão de crédito, débito ou dinheiro? Se for dinheiro, precisa de troco?
+
+🧾 *Deseja CPF na nota?* (Opcional)
+- Ex: 000.000.000-00
+
+Assim que você enviar essas informações, nossa equipe irá conferir os detalhes e confirmar com você! 😊
+
+*Exemplo completo:*
+- Arroz Tio João 1kg - 3 unidades
+- Leite Italac - 2 unidades
+CPF: 123.456.789-00
+Pagamento: Dinheiro (troco para R$ 100)
+
+💰 Não esqueça de entrar no nosso grupo de promoções:
+https://chat.whatsapp.com/promocoeseta`);
 
     } else if (msg.body !== null && msg.body.trim() === '2') {
         await delay(1500);
@@ -70,7 +90,7 @@ Tenha sua lista de compras em mãos para facilitar! 😉${mensagemGrupoOfertas}`
         await delay(2000);
         await client.sendMessage(msg.from, `Que bom que você tem interesse em trabalhar conosco! 😊
 
-Para enviar seu currículo, por favor, mande um e-mail para: curriculos@supermercadoeta.com.br
+Para enviar seu currículo, por favor, mande um e-mail para: curriculos.etaguara@gmail.com
 
 Boa sorte! 🤞${mensagemGrupoOfertas}`);
 
@@ -81,7 +101,7 @@ Boa sorte! 🤞${mensagemGrupoOfertas}`);
         await client.sendMessage(msg.from, `Oba! 🎉 Fique por dentro de todas as nossas promoções fresquinhas!
 
 Clique no link abaixo para entrar no nosso grupo de promoções do WhatsApp:
-https://chat.whatsapp.com/SEU_LINK_AQUI_PROMOCOES
+https://chat.whatsapp.com/promocoeseta
 
 Esperamos você lá! 😉`); 
         // A mensagem final de convite ao grupo de ofertas já está no texto principal desta opção.
@@ -120,20 +140,16 @@ Boas compras! 🛍️${mensagemGrupoOfertas}`);
                 await delay(1000);
                 await client.sendMessage(msg.from, media, {caption: 'Tabloide de ofertas do Supermercado Eta! 🛒'});
             } else {
-                // Se o arquivo não existe, envia apenas a mensagem de texto
-                await client.sendMessage(msg.from, `Confira nossas ofertas incríveis no tabloide desta semana! 📰✨
-
-Você pode acessá-lo clicando neste link: [LINK_DO_SEU_TABLOIDE_AQUI]
+                // Se o arquivo não existe, envia mensagem de erro
+                await client.sendMessage(msg.from, `Desculpe, mas o tabloide de ofertas não está disponível no momento. Por favor, tente novamente mais tarde. 😊
 
 Boas compras! 🛍️${mensagemGrupoOfertas}`);
             }
         } catch (error) {
             console.error('Erro ao enviar o tabloide:', error);
             
-            // Em caso de erro, envia a mensagem padrão
-            await client.sendMessage(msg.from, `Confira nossas ofertas incríveis no tabloide desta semana! 📰✨
-
-Você pode acessá-lo clicando neste link: [LINK_DO_SEU_TABLOIDE_AQUI]
+            // Em caso de erro, envia mensagem de erro
+            await client.sendMessage(msg.from, `Desculpe, mas o tabloide de ofertas não está disponível no momento. Por favor, tente novamente mais tarde. 😊
 
 Boas compras! 🛍️${mensagemGrupoOfertas}`);
         }
