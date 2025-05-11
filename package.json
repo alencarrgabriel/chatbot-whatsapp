@@ -1,7 +1,18 @@
 {
+  "name": "chatbot-whatsapp",
+  "version": "1.0.0",
+  "description": "Chatbot WhatsApp para o Supermercado Eta",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
   "dependencies": {
-    "moment-timezone": "^0.5.45",
     "qrcode-terminal": "^0.12.0",
-    "whatsapp-web.js": "" 
+    "sqlite3": "^5.1.7",
+    "whatsapp-web.js": "^1.23.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3"
   }
 }
