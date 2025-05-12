@@ -123,8 +123,8 @@ Gabriel Alencar
 
 ## 📞 Contato
 
-- Email: seu-email@exemplo.com
-- GitHub: [@seu-usuario](https://github.com/seu-usuario)
+- Email: gabrielalencardearaujo04@exemplo.com
+- GitHub: [@alencarrgabriel](https://github.com/alencarrgabriel)
 
 ---
 ⭐️ Desenvolvido com ❤️ para o Supermercado Eta 
