@@ -20,34 +20,32 @@ Este projeto é um assistente virtual para WhatsApp desenvolvido para o Supermer
 - NPM ou Yarn
 - WhatsApp instalado no celular
 
-## 🔧 Instalação
+## 🏁 Como iniciar o sistema
 
-1. Clone o repositório:
+### 1. Iniciar o bot do WhatsApp (gera o QR Code)
 ```bash
-git clone https://github.com/seu-usuario/chatbot-whatsapp.git
-cd chatbot-whatsapp
-```
-
-2. Instale as dependências:
-```bash
-npm install
-```
-
-3. Configure o arquivo de constantes:
-- Edite `src/constants.js` para personalizar mensagens e links
-
-4. Inicie o bot:
-```bash
+npm install # (apenas na primeira vez)
 npm start
 ```
+- O terminal exibirá um QR Code. Escaneie com o WhatsApp para conectar.
 
-## 💻 Uso
+### 2. Iniciar o backend (API Express)
+```bash
+cd web-app
+npm install # (apenas na primeira vez)
+node server.js
+```
+- O backend ficará disponível em http://localhost:3000
 
-1. Ao iniciar, o bot gerará um QR Code no terminal
-2. Escaneie o QR Code com seu WhatsApp
-3. O bot estará pronto para uso
+### 3. Iniciar o frontend (painel de pedidos)
+```bash
+cd frontend
+npm install # (apenas na primeira vez)
+npm run serve
+```
+- O painel ficará disponível em http://localhost:8080
 
-### 📱 Menu Principal
+## 📱 Menu Principal do Bot
 
 1. Fazer pedido para entrega 🛒
 2. Enviar currículo 📄
@@ -74,21 +72,25 @@ npm start
 
 ```
 /src
-├── index.js           # Ponto de entrada
-├── chatbot.js         # Lógica principal
+├── index.js           # Ponto de entrada do bot
+├── chatbot.js         # Lógica principal do bot
 ├── menuHandler.js     # Manipulador do menu
 ├── timeoutManager.js  # Gerenciador de timeout
-├── pedidoService.js   # Serviço de pedidos
-├── utils.js          # Funções utilitárias
-├── constants.js      # Constantes e mensagens
-└── db.sqlite         # Banco de dados
+├── pedidoService.js   # Serviço de pedidos (SQLite)
+├── utils.js           # Funções utilitárias
+├── constants.js       # Constantes e mensagens
+└── db.sqlite          # Banco de dados
+/web-app
+├── server.js          # Backend Express (API)
+/frontend
+├── src/App.vue        # Painel de pedidos
 ```
 
 ## 📝 Banco de Dados
 
 O bot utiliza SQLite para armazenar os pedidos. A tabela `pedidos` contém:
 
-- ID do pedido
+- ID do pedido (autoincremental)
 - Cliente
 - Itens
 - Forma de pagamento
@@ -97,12 +99,18 @@ O bot utiliza SQLite para armazenar os pedidos. A tabela `pedidos` contém:
 - Data de criação
 - Data de atualização
 
+## 💡 Dicas e Observações
+- Sempre inicie o bot antes do backend e frontend para garantir o fluxo correto.
+- O QR Code só aparece na primeira conexão ou se perder a sessão.
+- O backend e o frontend podem ser acessados de outros dispositivos na rede local, basta usar o IP da máquina onde estão rodando.
+- Para reiniciar o banco de dados, basta apagar o arquivo `src/db.sqlite` (isso apagará todos os pedidos).
+
 ## 🤝 Contribuindo
 
 1. Faça um fork do projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
+2. Crie uma branch para sua feature (`git checkout -b feature/NomeDaFeature`)
+3. Commit suas mudanças (`git commit -m 'Minha feature'`)
+4. Push para a branch (`git push origin feature/NomeDaFeature`)
 5. Abra um Pull Request
 
 ## 📄 Licença
