@@ -63,31 +63,95 @@ async function migrarPedidosJSON() {
 // Cria a tabela de pedidos se não existir
 function setupDatabase() {
     log('INFO', 'Iniciando setup do banco de dados');
-    db.run(`
-        CREATE TABLE IF NOT EXISTS pedidos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            cliente TEXT NOT NULL,
-            itens TEXT NOT NULL,
-            pagamento TEXT NOT NULL,
-            cpf TEXT,
-            status TEXT NOT NULL,
-            data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
-            data_atualizacao DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    `, (err) => {
+
+    // Primeiro, verificamos se a tabela existe
+    db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='pedidos'", (err, row) => {
         if (err) {
-            log('ERRO', 'Erro ao criar tabela de pedidos:', err);
-        } else {
-            log('INFO', 'Tabela de pedidos criada/verificada com sucesso');
-            
-            // Verifica se a tabela foi criada
-            db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='pedidos'", (err, row) => {
+            log('ERRO', 'Erro ao verificar tabela:', err);
+            return;
+        }
+        
+        if (!row) {
+            // Se a tabela não existe, criamos com todos os campos necessários
+            db.run(`
+                CREATE TABLE IF NOT EXISTS pedidos (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    cliente TEXT NOT NULL,
+                    telefone TEXT,
+                    itens TEXT NOT NULL,
+                    pagamento TEXT NOT NULL,
+                    cpf TEXT,
+                    status TEXT NOT NULL,
+                    data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    data_atualizacao DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            `, (err) => {
                 if (err) {
-                    log('ERRO', 'Erro ao verificar tabela após criação:', err);
-                } else if (!row) {
-                    log('ERRO', 'Tabela pedidos não encontrada após criação');
+                    log('ERRO', 'Erro ao criar tabela de pedidos:', err);
                 } else {
-                    log('INFO', 'Tabela pedidos confirmada após criação');
+                    log('INFO', 'Tabela de pedidos criada com sucesso (incluindo coluna telefone)');
+                }
+            });
+        } else {
+            // A tabela existe, verificamos se tem a coluna telefone
+            db.all("PRAGMA table_info(pedidos)", (err, rows) => {
+                if (err) {
+                    log('ERRO', 'Erro ao verificar colunas da tabela:', err);
+                    return;
+                }
+                
+                // Verificamos se a coluna telefone existe
+                const temColunaTelefone = rows.some(row => row.name === 'telefone');
+                
+                if (!temColunaTelefone) {
+                    log('INFO', 'Coluna telefone não encontrada, adicionando...');
+                    
+                    // SQLite tem limitações com ALTER TABLE, então tentamos adicionar com tratamento de erro
+                    db.run("ALTER TABLE pedidos ADD COLUMN telefone TEXT", (alterErr) => {
+                        if (alterErr) {
+                            log('ERRO', 'Erro ao adicionar coluna telefone:', alterErr);
+                            
+                            // Se falhar, tentamos recriar a tabela com backup
+                            db.run(`
+                                BEGIN TRANSACTION;
+                                
+                                -- Criar tabela temporária com estrutura nova
+                                CREATE TABLE pedidos_temp (
+                                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                    cliente TEXT NOT NULL,
+                                    telefone TEXT,
+                                    itens TEXT NOT NULL,
+                                    pagamento TEXT NOT NULL,
+                                    cpf TEXT,
+                                    status TEXT NOT NULL,
+                                    data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+                                    data_atualizacao DATETIME DEFAULT CURRENT_TIMESTAMP
+                                );
+                                
+                                -- Copiar dados da tabela original para a temporária
+                                INSERT INTO pedidos_temp(id, cliente, itens, pagamento, cpf, status, data_criacao, data_atualizacao)
+                                SELECT id, cliente, itens, pagamento, cpf, status, data_criacao, data_atualizacao FROM pedidos;
+                                
+                                -- Remover tabela original
+                                DROP TABLE pedidos;
+                                
+                                -- Renomear tabela temporária para pedidos
+                                ALTER TABLE pedidos_temp RENAME TO pedidos;
+                                
+                                COMMIT;
+                            `, (migrationErr) => {
+                                if (migrationErr) {
+                                    log('ERRO', 'Falha na migração da tabela pedidos:', migrationErr);
+                                } else {
+                                    log('INFO', 'Tabela pedidos recriada com coluna telefone');
+                                }
+                            });
+                        } else {
+                            log('INFO', 'Coluna telefone adicionada com sucesso');
+                        }
+                    });
+                } else {
+                    log('INFO', 'Coluna telefone já existe na tabela');
                 }
             });
         }
@@ -97,26 +161,27 @@ function setupDatabase() {
 // Salva um novo pedido
 async function salvarPedido(pedido) {
     try {
-        const { cliente, itens, pagamento, cpf, status = 'pendente', data_criacao } = pedido;
+        const { cliente, telefone, itens, pagamento, cpf, status = 'pendente', dataHora } = pedido;
         log('DEBUG', 'Tentando salvar pedido:', pedido);
         const stmt = db.prepare(`
-            INSERT INTO pedidos (cliente, itens, pagamento, cpf, status, data_criacao)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO pedidos (cliente, telefone, itens, pagamento, cpf, status, data_criacao)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         `);
         return new Promise((resolve, reject) => {
             stmt.run(
                 cliente,
+                telefone || null,
                 JSON.stringify(itens),
                 pagamento,
                 cpf || null,
                 status,
-                data_criacao || new Date().toISOString(),
+                dataHora || new Date().toISOString(),
                 function(err) {
                     if (err) {
                         log('ERRO', 'Erro ao salvar pedido:', err);
                         reject(err);
                     } else {
-                        log('INFO', 'Pedido salvo com sucesso', { id: this.lastID, ...pedido });
+                        log('INFO', 'Pedido salvo com sucesso', { id: this.lastID, cliente, telefone });
                         db.get('SELECT * FROM pedidos WHERE id = ?', [this.lastID], (err, row) => {
                             if (err) {
                                 log('ERRO', 'Erro ao verificar pedido salvo:', err);

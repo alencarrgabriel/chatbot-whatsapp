@@ -16,13 +16,8 @@ class MenuHandler {
 
     // Mostra o menu principal
     async mostrarMenu(msg, name) {
-        await sendMessageWithTyping(this.client, await msg.getChat(), msg.from, MENU_PRINCIPAL(name));
-    }
-
-    // Opção 1 - Fazer pedido
-    async iniciarPedido(msg, chat) {
-        // Implementado no chatbot.js
-        return true;
+        const chat = await msg.getChat();
+        await sendMessageWithTyping(this.client, chat, msg.from, MENU_PRINCIPAL(name));
     }
 
     // Opção 2 - Enviar currículo
@@ -34,8 +29,6 @@ Para enviar seu currículo, por favor, mande um e-mail para: ${LINKS.EMAIL_CURRI
 
 Boa sorte! 🤞${MENSAGEM_GRUPO_OFERTAS}`
         );
-        await this.mostrarMenu(msg, (await msg.getContact()).pushname || "Cliente");
-        return true;
     }
 
     // Opção 3 - Grupo de promoções
@@ -48,14 +41,13 @@ ${LINKS.GRUPO_PROMOCOES}
 
 Esperamos você lá! 😉`
         );
-        await this.mostrarMenu(msg, (await msg.getContact()).pushname || "Cliente");
-        return true;
     }
 
     // Opção 4 - Falar com equipe
     async falarComEquipe(msg, chat) {
-        await sendMessageWithTyping(this.client, chat, msg.from, 
-            `Para falar com nossa equipe, você pode:
+        try {
+            await sendMessageWithTyping(this.client, chat, msg.from, 
+                `Para falar com nossa equipe, você pode:
 📞 Ligar para: ${LINKS.TELEFONE} durante nosso horário comercial:
    • Segunda a Sábado: 7h às 21h
    • Domingo: 7h às 14h
@@ -63,9 +55,13 @@ Esperamos você lá! 😉`
 💬 Ou, se preferir, aguarde um momento que logo um de nossos atendentes irá te responder por aqui no WhatsApp.
 
 Por favor, nos diga como podemos te ajudar.${MENSAGEM_GRUPO_OFERTAS}`
-        );
-        await this.mostrarMenu(msg, (await msg.getContact()).pushname || "Cliente");
-        return true;
+            );
+            
+            // Notifica internamente que o cliente está aguardando atendimento
+            log('INFO', 'Cliente solicitou atendimento com a equipe', { from: msg.from, contato: (await msg.getContact()).pushname || "Cliente" });
+        } catch (error) {
+            log('ERRO', 'Erro ao processar solicitação para falar com a equipe:', error);
+        }
     }
 
     // Opção 5 - Ver tabloide
@@ -84,15 +80,13 @@ Boas compras! 🛍️${MENSAGEM_GRUPO_OFERTAS}`
                 
                 await this.client.sendMessage(msg.from, media, {caption: 'Tabloide de ofertas do Supermercado Eta! 🛒'});
             } else {
+                log('AVISO', 'Arquivo do tabloide não encontrado', { tabloidePath });
                 await sendMessageWithTyping(this.client, chat, msg.from, MENSAGENS_ERRO.TABLOIDE_INDISPONIVEL);
             }
         } catch (error) {
             log('ERRO', 'Erro ao enviar tabloide:', error);
             await sendMessageWithTyping(this.client, chat, msg.from, MENSAGENS_ERRO.TABLOIDE_INDISPONIVEL);
         }
-        
-        await this.mostrarMenu(msg, (await msg.getContact()).pushname || "Cliente");
-        return true;
     }
 
     // Opção 6 - Horário de funcionamento
@@ -107,14 +101,51 @@ Boas compras! 🛍️${MENSAGEM_GRUPO_OFERTAS}`
 
 Estamos sempre à disposição para atendê-lo! 😊${MENSAGEM_GRUPO_OFERTAS}`
         );
-        await this.mostrarMenu(msg, (await msg.getContact()).pushname || "Cliente");
-        return true;
     }
 
     // Comando inválido
     async comandoInvalido(msg, chat) {
         await sendMessageWithTyping(this.client, chat, msg.from, MENSAGENS_ERRO.COMANDO_INVALIDO);
-        return true;
+    }
+
+    // Processar comandos do tipo !comando
+    async processarComando(msg) {
+        try {
+            const comando = msg.body.trim().toLowerCase().replace('!', '');
+            const chat = await msg.getChat();
+            const name = (await msg.getContact()).pushname || "Cliente";
+            
+            switch (comando) {
+                case 'menu':
+                    await this.mostrarMenu(msg, name);
+                    break;
+                case 'curriculo':
+                case 'currículo':
+                    await this.enviarCurriculo(msg, chat);
+                    break;
+                case 'promocoes':
+                case 'promoções':
+                    await this.grupoPromocoes(msg, chat);
+                    break;
+                case 'ajuda':
+                case 'help':
+                    await this.falarComEquipe(msg, chat);
+                    break;
+                case 'tabloide':
+                case 'ofertas':
+                    await this.verTabloide(msg, chat);
+                    break;
+                case 'horario':
+                case 'horário':
+                    await this.horarioFuncionamento(msg, chat);
+                    break;
+                default:
+                    await this.comandoInvalido(msg, chat);
+                    break;
+            }
+        } catch (error) {
+            log('ERRO', 'Erro ao processar comando:', error);
+        }
     }
 }
 

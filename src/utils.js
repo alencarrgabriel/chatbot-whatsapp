@@ -74,7 +74,8 @@ function isGroupMessage(msg) {
 
 // Função para verificar se é um comando de menu
 function isMenuCommand(msg) {
-    return msg.body.match(/(menu|cardapio|lista|opcoes|opções|preciso de ajuda|ajuda|comecar|começar|iniciar|ola|olá|oi|bom dia|boa tarde|boa noite|pedido|entrega|compras|mercado|supermercado|mercado eta|eta supermercado|horario|horário|funcionamento)/i) && !msg.body.match(/^[1-6]$/);
+    if (!msg || !msg.body) return false;
+    return msg.body.match(/(menu|cardapio|lista|opcoes|opções|preciso de ajuda|ajuda|comecar|começar|iniciar|ola|olá|oi|bom dia|boa tarde|boa noite|pedido|entrega|compras|mercado|supermercado|mercado eta|eta supermercado|horario|horário|funcionamento)/i) && !msg.body.match(/^[1-7]$/);
 }
 
 function formatarItens(itens) {

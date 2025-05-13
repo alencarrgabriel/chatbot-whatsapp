@@ -35,17 +35,34 @@
 
           <div class="pedido-info">
             <p><strong>Cliente:</strong> {{ pedido.cliente }}</p>
+            <p>
+              <strong>Telefone:</strong> 
+              <span v-if="pedido.telefone">{{ formatarTelefone(pedido.telefone) }}</span>
+              <span v-else>Não disponível</span>
+              <a v-if="pedido.telefone" 
+                 :href="'https://wa.me/' + getNumeroLimpo(pedido.telefone)" 
+                 target="_blank" 
+                 class="whatsapp-link"
+                 title="Abrir no WhatsApp">
+                <i class="whatsapp-icon">📱</i>
+              </a>
+            </p>
             <p v-if="pedido.cpf"><strong>CPF:</strong> {{ pedido.cpf }}</p>
             <p><strong>Pagamento:</strong> {{ pedido.pagamento }}</p>
+            <p><strong>Data/Hora:</strong> {{ formatarData(pedido.dataHora) }}</p>
           </div>
 
           <div class="itens">
+            <h4>Produtos:</h4>
             <ul>
               <li v-for="(item, index) in pedido.itens" :key="index">
                 {{ item }}
               </li>
             </ul>
-            <button class="finalizar-btn" @click="finalizarPedido(pedido.id)">Finalizar pedido</button>
+            <div class="botoes-pedido">
+              <button class="finalizar-btn" @click="finalizarPedido(pedido.id)">Finalizar pedido</button>
+              <button class="contatar-btn" @click="contatarCliente(pedido.telefone)">Contatar cliente</button>
+            </div>
           </div>
         </div>
       </div>
@@ -67,15 +84,84 @@ export default {
     };
   },
   methods: {
+    getNumeroLimpo(telefone) {
+      if (!telefone) return '';
+      return telefone.replace('@c.us', '').replace(/\D+/g, ''); // Remove tudo que não for dígito
+    },
+    formatarTelefone(telefone) {
+      if (!telefone) return '';
+      // Remove a parte @c.us do número do WhatsApp
+      let numero = this.getNumeroLimpo(telefone);
+      
+      // Formata o número brasileiro (ex: 55 61 98765-4321)
+      if (numero.startsWith('55') && numero.length >= 12) {
+        return `+${numero.substring(0, 2)} ${numero.substring(2, 4)} ${numero.substring(4, 9)}-${numero.substring(9)}`;
+      }
+      
+      return numero;
+    },
+    formatarData(dataString) {
+      if (!dataString) return '';
+      
+      try {
+        const data = new Date(dataString);
+        return data.toLocaleString('pt-BR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      } catch (e) {
+        console.error('Erro ao formatar data:', e);
+        return dataString;
+      }
+    },
+    contatarCliente(telefone) {
+      if (!telefone) {
+        alert('Número de telefone não disponível');
+        return;
+      }
+      
+      // Remove a parte @c.us do número do WhatsApp
+      let numero = this.getNumeroLimpo(telefone);
+      
+      // Verificar se é um número válido
+      if (!numero || !numero.match(/^\d+$/)) {
+        console.error('Número de telefone inválido:', numero);
+        alert('Número de telefone inválido ou não formatado corretamente');
+        return;
+      }
+      
+      console.log('Tentando abrir WhatsApp com número:', numero);
+      
+      // Criar um elemento <a> temporário para simular um clique em um link
+      const link = document.createElement('a');
+      link.href = `https://wa.me/${numero}`;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Mostrar um feedback visual para o usuário
+      setTimeout(() => {
+        alert(`Abrindo WhatsApp para o número: ${numero}`);
+      }, 500);
+    },
     async carregarPedidos() {
       this.carregando = true;
       this.erro = null;
       try {
-        const response = await axios.get('http://localhost:3000/api/pedidos');
+        // Usar URL relativa ou baseada no host atual
+        const apiUrl = `/api/pedidos`;
+        const response = await axios.get(apiUrl);
         console.log('Dados recebidos:', response.data);
         
         this.pedidos = response.data.map(pedido => {
           console.log('Processando pedido:', pedido);
+          
+          // Garantir que temos os campos necessários com valores padrão
           let itens = [];
           try {
             itens = typeof pedido.itens === 'string' ? JSON.parse(pedido.itens) : pedido.itens;
@@ -83,14 +169,20 @@ export default {
             console.error('Erro ao processar itens:', e);
             itens = [];
           }
+          
           return {
-            ...pedido,
-            itens: Array.isArray(itens) ? itens : []
+            id: pedido.id || 0,
+            cliente: pedido.cliente || 'Cliente não identificado',
+            telefone: pedido.telefone || null,
+            itens: Array.isArray(itens) ? itens : [],
+            pagamento: pedido.pagamento || 'Não informado',
+            cpf: pedido.cpf || 'Não informado',
+            dataHora: pedido.dataHora || pedido.data || new Date().toISOString(),
+            status: pedido.status || 'pendente'
           };
         });
         
         console.log('Pedidos processados:', this.pedidos);
-        console.log('Itens do primeiro pedido:', this.pedidos[0]?.itens);
       } catch (error) {
         this.erro = 'Erro ao carregar pedidos. Verifique se o servidor está rodando.';
         console.error('Erro:', error);
@@ -270,8 +362,8 @@ body {
 }
 
 .status-badge.pendente {
-  background-color: #f1c40f;
-  color: var(--text-color);
+  background-color: #f39c12;
+  color: white;
 }
 
 .pedido-info {
@@ -311,5 +403,43 @@ body {
 
 .finalizar-btn:hover {
   background-color: #b30000;
+}
+
+.contatar-btn {
+  margin-top: 12px;
+  padding: 8px 16px;
+  background-color: #3498db;
+  color: #fff;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.2s;
+  margin-left: 8px;
+}
+
+.contatar-btn:hover {
+  background-color: #2980b9;
+}
+
+.botoes-pedido {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.whatsapp-link {
+  text-decoration: none;
+  margin-left: 8px;
+  color: #25D366; /* Cor do WhatsApp */
+  font-size: 18px;
+}
+
+.whatsapp-link:hover {
+  opacity: 0.8;
+}
+
+.whatsapp-icon {
+  font-size: 18px;
 }
 </style> 

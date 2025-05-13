@@ -4,11 +4,15 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 8080;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Configurar caminho para o frontend compilado
+const frontendPath = path.join(__dirname, '..', 'frontend', 'dist');
+app.use(express.static(frontendPath));
 
 // Função para log
 function log(tipo, mensagem, dados = null) {
@@ -54,10 +58,11 @@ app.get('/api/pedidos', (req, res) => {
         SELECT 
             id,
             cliente,
+            telefone,
             itens,
             pagamento,
             cpf,
-            data_criacao as data,
+            data_criacao as dataHora,
             status
         FROM pedidos 
         ORDER BY data_criacao DESC
@@ -115,7 +120,36 @@ app.delete('/api/pedidos/:id', (req, res) => {
     });
 });
 
+// Rota para enviar o frontend em qualquer rota não capturada
+app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+});
+
 // Inicia o servidor
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
+    const ipAddresses = getNetworkAddresses();
+    
     log('INFO', `Servidor rodando em http://localhost:${port}`);
-}); 
+    
+    ipAddresses.forEach(ip => {
+        log('INFO', `Acessível na rede em: http://${ip}:${port}`);
+    });
+});
+
+// Função para obter endereços de rede
+function getNetworkAddresses() {
+    const { networkInterfaces } = require('os');
+    const nets = networkInterfaces();
+    const results = [];
+
+    for (const name of Object.keys(nets)) {
+        for (const net of nets[name]) {
+            // Desconsiderar endereços IPv6 e endereços internos de loopback
+            if (net.family === 'IPv4' && !net.internal) {
+                results.push(net.address);
+            }
+        }
+    }
+    
+    return results;
+} 

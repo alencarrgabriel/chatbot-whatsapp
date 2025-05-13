@@ -1,24 +1,21 @@
-const TIMEOUT_DURATION = 5 * 60 * 1000; // 5 minutos
-const userTimeouts = {};
+const timeoutManager = require('./timeoutManager');
+const { log } = require('./utils');
 
-function resetarTimeout(userId) {
-    if (userTimeouts[userId]) {
-        clearTimeout(userTimeouts[userId]);
-    }
-
-    userTimeouts[userId] = setTimeout(() => {
-        delete userTimeouts[userId];
-    }, TIMEOUT_DURATION);
+function resetarTimeout(client, userId) {
+    timeoutManager.resetTimeout(client, userId);
+    log('INFO', 'Timeout resetado', { userId });
 }
 
 function limparTimeout(userId) {
-    if (userTimeouts[userId]) {
-        clearTimeout(userTimeouts[userId]);
-        delete userTimeouts[userId];
-    }
+    timeoutManager.clearTimeout(userId);
+}
+
+function temTimeout(userId) {
+    return timeoutManager.hasTimeout(userId);
 }
 
 module.exports = {
     resetarTimeout,
-    limparTimeout
+    limparTimeout,
+    temTimeout
 }; 
