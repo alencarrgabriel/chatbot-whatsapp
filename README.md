@@ -160,3 +160,11 @@ Gabriel Alencar
 
 ---
 ⭐️ Desenvolvido com ❤️ para o Supermercado Eta 
+
+[
+](https://github.com/user-attachments/assets/ae33e99a-4122-4ebb-b35d-78806666f3cc)
+
+![Image](https://github.com/user-attachments/assets/cb61df0b-f9e5-49eb-8c74-28d90222b1a3)
+![Image](https://github.com/user-attachments/assets/7a32ba5a-62bf-48fd-bc2a-f79e56121e55)
+![Image](https://github.com/user-attachments/assets/d06f2482-7147-4e24-b882-53f19b212356)
+![Image](https://github.com/user-attachments/assets/1dc8698d-30b9-4fe8-8838-23331514275f)
